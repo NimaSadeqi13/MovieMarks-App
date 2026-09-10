@@ -11,19 +11,13 @@
   <title>MovieMarks</title>
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v2.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v2.png">
-  <link rel="manifest" href="manifest.webmanifest?v=45">
+  <link rel="manifest" href="manifest.webmanifest?v=46">
   <style>
-    *{box-sizing:border-box}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070809;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    #app{position:fixed;inset:0 0 calc(66px + env(safe-area-inset-bottom)) 0;width:100%;height:auto;border:0;background:#070809}
-    #loading{position:fixed;z-index:30;inset:0;display:grid;place-items:center;background:#070809;transition:opacity .18s ease}
-    #loading.hide{opacity:0;pointer-events:none}
-    .box{text-align:center}.mark{width:112px;height:112px;border-radius:26px;display:block;margin:auto;box-shadow:0 18px 60px #000}.spin{width:24px;height:24px;border:2px solid #333;border-top-color:#ed2730;border-radius:50%;margin:22px auto 0;animation:s .7s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070809;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    #app{position:fixed;left:0;right:0;top:0;bottom:calc(66px + env(safe-area-inset-bottom));width:100%;height:auto;border:0;background:#070809}
+    #loading{position:fixed;z-index:30;inset:0;display:grid;place-items:center;background:#070809;transition:opacity .18s ease}.hide{opacity:0;pointer-events:none}.box{text-align:center}.mark{width:112px;height:112px;border-radius:26px;display:block;margin:auto;box-shadow:0 18px 60px #000}.spin{width:24px;height:24px;border:2px solid #333;border-top-color:#ed2730;border-radius:50%;margin:22px auto 0;animation:s .7s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
     .shell-nav{position:fixed;z-index:20;left:0;right:0;bottom:0;height:calc(66px + env(safe-area-inset-bottom));padding:6px 8px env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(9,11,12,.98);border-top:1px solid #252a2e}.shell-nav button{appearance:none;border:0;background:transparent;color:#858b91;display:grid;place-items:center;align-content:center;gap:3px;font:600 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-width:0;border-radius:13px}.shell-nav button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.shell-nav button.active{color:#f4f5f6;background:#191c1f}.shell-nav button.active svg{stroke:#ef2b33}
-    body.auth-open #app,body.keyboard-open #app{bottom:0}
-    body.auth-open .shell-nav,body.keyboard-open .shell-nav{display:none}
-    body.mobile-native #app{inset:0!important;width:100%!important;height:100%!important;bottom:0!important}
-    body.mobile-native .shell-nav{display:none!important}
+    body.auth-open #app,body.keyboard-open #app{bottom:0}body.auth-open .shell-nav,body.keyboard-open .shell-nav{display:none}
   </style>
 </head>
 <body class="auth-open">
@@ -36,45 +30,29 @@
 <button data-tab="library"><svg viewBox="0 0 24 24"><path d="M4 4h5v16H4zM10 4h5v16h-5zM16 5l4-1 2 15-4 1z"/></svg><span>Library</span></button>
 </nav>
 <script>
-// MovieMarks v4.5: on phones the Apps Script UI owns the full viewport and its own navigation.
-const APP_URL='https://script.google.com/macros/s/AKfycbx_R7jafzk1cBmBDB86DxV1y8dZdxvHDe8c9_LwDE_HWI__Pt1Da9GHVq9vuA3SD8hzgQ/exec?v=45';
-const frame=document.getElementById('app'),loading=document.getElementById('loading'),buttons=[...document.querySelectorAll('.shell-nav button')];
-const SESSION_KEY='moviemarks_session_v4';
+// MovieMarks v4.6: mobile uses Apps Script as the top-level page; desktop keeps the GitHub shell.
+const APP_URL='https://script.google.com/macros/s/AKfycbx_R7jafzk1cBmBDB86DxV1y8dZdxvHDe8c9_LwDE_HWI__Pt1Da9GHVq9vuA3SD8hzgQ/exec?v=46';
 const MOBILE=matchMedia('(max-width:900px)').matches || matchMedia('(pointer:coarse)').matches;
-if(MOBILE) document.body.classList.add('mobile-native');
-let appWindow=null,pendingTab='home',backWaiting=false;
-function validAppEvent(e){if(e.source!==frame.contentWindow)return false;try{const h=new URL(e.origin).hostname;return h==='script.google.com'||h.endsWith('.googleusercontent.com')}catch(x){return false}}
-function setActive(tab){pendingTab=tab;buttons.forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}
-function hideLoading(){loading.classList.add('hide')}
-function idbOpen(){return new Promise((res,rej)=>{try{const r=indexedDB.open('MovieMarksShell',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
-async function idbSet(k,v){try{const db=await idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
-async function idbGet(k){try{const db=await idbOpen();const v=await new Promise((res,rej)=>{const tx=db.transaction('kv','readonly'),r=tx.objectStore('kv').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>rej(r.error)});db.close();return String(v||'')}catch(e){return''}}
-async function saveToken(t){try{t?localStorage.setItem(SESSION_KEY,t):localStorage.removeItem(SESSION_KEY)}catch(e){}await idbSet(SESSION_KEY,t||'')}
-async function getToken(){let t='';try{t=localStorage.getItem(SESSION_KEY)||localStorage.getItem('mm_session_shell_v2')||localStorage.getItem('mm_session_shell')||localStorage.getItem('moviemarks_session_v1')||''}catch(e){}if(!t)t=await idbGet(SESSION_KEY);if(t)saveToken(t);return t}
-function send(data){if(appWindow)appWindow.postMessage(data,'*')}
-function armGuard(){try{history.replaceState({mm:'root'},'',location.href);history.pushState({mm:'guard'},'',location.href)}catch(e){}}
-armGuard();
-window.addEventListener('popstate',()=>{if(backWaiting)return;if(!appWindow){try{history.pushState({mm:'guard'},'',location.href)}catch(e){};return}backWaiting=true;send({type:'moviemarks-system-back'});setTimeout(()=>{if(backWaiting){backWaiting=false;try{history.pushState({mm:'guard'},'',location.href)}catch(e){}}},500)});
-buttons.forEach(b=>b.addEventListener('click',()=>{if(MOBILE)return;const tab=b.dataset.tab;if(tab===pendingTab)return;setActive(tab);send({type:'moviemarks-nav',tab,push:true})}));
-window.addEventListener('message',async e=>{if(!validAppEvent(e)||!e.data)return;const d=e.data;
-  if(d.type==='moviemarks-ready'){
-    appWindow=e.source;
-    if(!MOBILE){send({type:'moviemarks-shell'});send({type:'moviemarks-nav',tab:pendingTab,push:false})}
-    send({type:'moviemarks-session-response',token:await getToken()});
-    hideLoading();
-    return;
-  }
-  if(d.type==='moviemarks-session-request'){send({type:'moviemarks-session-response',token:await getToken()});return}
-  if(d.type==='moviemarks-session-save'){await saveToken(String(d.token||''));return}
-  if(d.type==='moviemarks-session-clear'){await saveToken('');return}
-  if(d.type==='moviemarks-auth-state'){document.body.classList.toggle('auth-open',!!d.active);if(d.active)document.body.classList.remove('keyboard-open');return}
-  if(d.type==='moviemarks-route-state'&&d.tab&&!MOBILE)setActive(d.tab)
-  if(d.type==='moviemarks-keyboard')document.body.classList.toggle('keyboard-open',!!d.open)
-  if(d.type==='moviemarks-back-consumed'){backWaiting=false;try{history.pushState({mm:'guard'},'',location.href)}catch(e){};return}
-  if(d.type==='moviemarks-back-at-root'){backWaiting=false;try{history.back()}catch(e){};return}
-});
-frame.addEventListener('load',()=>setTimeout(hideLoading,1400));
-frame.src=APP_URL;
+if(MOBILE){
+  location.replace(APP_URL+'&mobile=1');
+}else{
+  const frame=document.getElementById('app'),loading=document.getElementById('loading'),buttons=[...document.querySelectorAll('.shell-nav button')];
+  const SESSION_KEY='moviemarks_session_v4';let appWindow=null,pendingTab='home',backWaiting=false;
+  function validAppEvent(e){if(e.source!==frame.contentWindow)return false;try{const h=new URL(e.origin).hostname;return h==='script.google.com'||h.endsWith('.googleusercontent.com')}catch(x){return false}}
+  function setActive(tab){pendingTab=tab;buttons.forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}
+  function hideLoading(){loading.classList.add('hide')}
+  function idbOpen(){return new Promise((res,rej)=>{try{const r=indexedDB.open('MovieMarksShell',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+  async function idbSet(k,v){try{const db=await idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
+  async function idbGet(k){try{const db=await idbOpen();const v=await new Promise((res,rej)=>{const tx=db.transaction('kv','readonly'),r=tx.objectStore('kv').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>rej(r.error)});db.close();return String(v||'')}catch(e){return''}}
+  async function saveToken(t){try{t?localStorage.setItem(SESSION_KEY,t):localStorage.removeItem(SESSION_KEY)}catch(e){}await idbSet(SESSION_KEY,t||'')}
+  async function getToken(){let t='';try{t=localStorage.getItem(SESSION_KEY)||localStorage.getItem('mm_session_shell_v2')||localStorage.getItem('mm_session_shell')||localStorage.getItem('moviemarks_session_v1')||''}catch(e){}if(!t)t=await idbGet(SESSION_KEY);if(t)saveToken(t);return t}
+  function send(data){if(appWindow)appWindow.postMessage(data,'*')}
+  function armGuard(){try{history.replaceState({mm:'root'},'',location.href);history.pushState({mm:'guard'},'',location.href)}catch(e){}}
+  armGuard();
+  window.addEventListener('popstate',()=>{if(backWaiting)return;if(!appWindow){try{history.pushState({mm:'guard'},'',location.href)}catch(e){};return}backWaiting=true;send({type:'moviemarks-system-back'});setTimeout(()=>{if(backWaiting){backWaiting=false;try{history.pushState({mm:'guard'},'',location.href)}catch(e){}}},500)});
+  buttons.forEach(b=>b.addEventListener('click',()=>{const tab=b.dataset.tab;if(tab===pendingTab)return;setActive(tab);send({type:'moviemarks-nav',tab,push:true})}));
+  window.addEventListener('message',async e=>{if(!validAppEvent(e)||!e.data)return;const d=e.data;if(d.type==='moviemarks-ready'){appWindow=e.source;send({type:'moviemarks-shell'});send({type:'moviemarks-session-response',token:await getToken()});send({type:'moviemarks-nav',tab:pendingTab,push:false});hideLoading();return}if(d.type==='moviemarks-session-request'){send({type:'moviemarks-session-response',token:await getToken()});return}if(d.type==='moviemarks-session-save'){await saveToken(String(d.token||''));return}if(d.type==='moviemarks-session-clear'){await saveToken('');return}if(d.type==='moviemarks-auth-state'){document.body.classList.toggle('auth-open',!!d.active);if(d.active)document.body.classList.remove('keyboard-open');return}if(d.type==='moviemarks-route-state'&&d.tab)setActive(d.tab);if(d.type==='moviemarks-keyboard')document.body.classList.toggle('keyboard-open',!!d.open);if(d.type==='moviemarks-back-consumed'){backWaiting=false;try{history.pushState({mm:'guard'},'',location.href)}catch(e){};return}if(d.type==='moviemarks-back-at-root'){backWaiting=false;try{history.back()}catch(e){};return}});
+  frame.addEventListener('load',()=>setTimeout(hideLoading,1400));frame.src=APP_URL;
+}
 </script>
-</body>
-</html>
+</body></html>
