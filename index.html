@@ -11,16 +11,16 @@
   <title>MovieMarks</title>
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v2.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v2.png">
-  <link rel="manifest" href="manifest.webmanifest?v=42">
+  <link rel="manifest" href="manifest.webmanifest?v=43">
   <style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;min-height:100dvh;overflow:hidden;background:#070809;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     #app{position:fixed;left:0;right:0;top:0;bottom:calc(66px + env(safe-area-inset-bottom));width:100%;height:auto;border:0;background:#070809;transition:bottom .12s ease}
     #loading{position:fixed;z-index:30;inset:0;display:grid;place-items:center;background:#070809;transition:opacity .18s ease}.hide{opacity:0;pointer-events:none}.box{text-align:center}.mark{width:112px;height:112px;border-radius:26px;display:block;margin:auto;box-shadow:0 18px 60px #000}.spin{width:24px;height:24px;border:2px solid #333;border-top-color:#ed2730;border-radius:50%;margin:22px auto 0;animation:s .7s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
     .shell-nav{position:fixed;z-index:20;left:0;right:0;bottom:0;height:calc(66px + env(safe-area-inset-bottom));padding:6px 8px env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(9,11,12,.98);border-top:1px solid #252a2e;transition:transform .16s ease,opacity .16s ease}.shell-nav button{appearance:none;border:0;background:transparent;color:#858b91;display:grid;place-items:center;align-content:center;gap:3px;font:600 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-width:0;border-radius:13px}.shell-nav button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.shell-nav button.active{color:#f4f5f6;background:#191c1f}.shell-nav button.active svg{stroke:#ef2b33}
-    body.keyboard-open #app,body.auth-open #app{bottom:0}body.keyboard-open .shell-nav,body.auth-open .shell-nav{transform:translateY(110%);opacity:0;pointer-events:none}body.auth-open{overflow:hidden}
+    body.keyboard-open #app,body.auth-open #app{bottom:0!important}body.keyboard-open .shell-nav,body.auth-open .shell-nav{display:none!important;transform:translateY(110%);opacity:0;pointer-events:none}body.auth-open{overflow:hidden}
   </style>
 </head>
-<body>
+<body class="auth-open">
 <div id="loading"><div class="box"><img class="mark" src="apple-touch-icon-v2.png" alt="MovieMarks"><div class="spin"></div></div></div>
 <iframe id="app" title="MovieMarks" allow="fullscreen"></iframe>
 <nav class="shell-nav" aria-label="Main navigation">
@@ -30,8 +30,8 @@
 <button data-tab="library"><svg viewBox="0 0 24 24"><path d="M4 4h5v16H4zM10 4h5v16h-5zM16 5l4-1 2 15-4 1z"/></svg><span>Library</span></button>
 </nav>
 <script>
-// MovieMarks v4.2: shell owns durable session, auth viewport, and system navigation.
-const APP_URL='https://script.google.com/macros/s/AKfycbx_R7jafzk1cBmBDB86DxV1y8dZdxvHDe8c9_LwDE_HWI__Pt1Da9GHVq9vuA3SD8hzgQ/exec?v=42';
+// MovieMarks v4.3: shell starts locked in auth mode; nav appears only after authenticated bootstrap.
+const APP_URL='https://script.google.com/macros/s/AKfycbx_R7jafzk1cBmBDB86DxV1y8dZdxvHDe8c9_LwDE_HWI__Pt1Da9GHVq9vuA3SD8hzgQ/exec?v=43';
 const frame=document.getElementById('app'),loading=document.getElementById('loading'),buttons=[...document.querySelectorAll('.shell-nav button')];
 const SESSION_KEY='moviemarks_session_v4';let appWindow=null,pendingTab='home',backWaiting=false;
 function validAppEvent(e){if(e.source!==frame.contentWindow)return false;try{const h=new URL(e.origin).hostname;return h==='script.google.com'||h.endsWith('.googleusercontent.com')}catch(x){return false}}
