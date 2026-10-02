@@ -6,6 +6,7 @@ self.addEventListener('push', (event) => {
     icon: `${self.registration.scope}icon-192.png`,
     badge: `${self.registration.scope}icon-192.png`,
     tag: 'moviemarks-inbox',
+    renotify: true,
     data: { url: `${self.registration.scope}?inbox=1` }
   }));
 });
