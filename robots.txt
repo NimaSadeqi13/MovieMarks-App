@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /MovieMarks-App/
+
+Sitemap: https://nimasadeqi13.github.io/MovieMarks-App/sitemap.xml
