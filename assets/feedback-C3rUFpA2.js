@@ -1,0 +1,1 @@
+import{E as a}from"./index-3BnEjokk.js";const d={mine:e=>a.call("listMyFeedback",e),send:(e,l)=>a.call("submitFeedback",e,{message:l}),inbox:e=>a.call("adminListFeedback",e),reply:(e,l,i)=>a.call("adminReplyFeedback",e,{id:l,reply:i})};export{d as f};
